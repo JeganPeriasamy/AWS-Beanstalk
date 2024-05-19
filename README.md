@@ -1,20 +1,23 @@
 AWS SERVICES USED
 <img src="https://cdn.hashnode.com/res/hashnode/image/upload/v1686905570005/3ec0e8ee-d811-430b-b320-b8705be620be.png?w=1600&h=840&fit=crop&crop=entropy&auto=compress,format&format=webp" alt="" >
-Frontend 	
+# A Complete Architecture Setup of AWS Servies to handle the Request
+# How it works ?
+When the User hits the URL - it seaches the Data in the CloudFront, it sends it data is available or request moves to the Beanstalk , and it controls the request by LoadBalancer , also monitored by cloudWatch, then the request goes to the MQ messager Service then after waiting its DATA is fetched from the RDS and response is send to User
+# Frontend 	
 Beanstalk 
 1.	VM for Tomcat
 2.	NGINX Load balancer 
 3.	Auto scaling
-S3 /EFS – Storage 	
+4. S3 /EFS – Storage 	
 
-Backend 
-RDS Instance (Database) 
-ELASTIC CHACHE
-ACTIVE MQ
-ROUTE 53 
-CLOUDFRONT 
+# Backend 
+1. RDS Instance (Database) 
+2. ELASTIC CHACHE
+3. ACTIVE MQ
+4. ROUTE 53 
+5. CLOUDFRONT 
 
-Procedure 
+# Procedure 
 1.	Create KEY PAIR – For : Beanstalk instance Login
 2.	Create SG – For: Elasticcache ,RDS, and ActiveMQ
 3.	Create – Elasticcache ,RDS, and ActiveMQ
@@ -32,40 +35,34 @@ Procedure
 15.	Test the URL
 
 
-
-STEPS 
+# STEPS 
 1.	Create KEYPAIR ---- Name:vprofilebeankey------PEM
-2.	Create SG 
-•	Name:vprofilebackendSG
-•	All Traffic —its own SG ( To interact with  the services that uses this)
+2.	Create SG (Name:vprofilebackendSG = All Traffic —its own SG ( To interact with  the services that uses this)
 3.	RDS
-•	subnet group ----Create---name:vprofilerdssubgroup---Default VPC---Add All AZ-and Subnets--- ( NETWORK THAT WE CREATED AND This NETWORK YOU ARE GOING TO LAUNCH YOUR DATABASE INSTANCE )
+4.	subnet group ----Create---name:vprofilerdssubgroup---Default VPC---Add All AZ-and Subnets--- ( NETWORK THAT WE CREATED AND This NETWORK YOU ARE GOING TO LAUNCH YOUR DATABASE INSTANCE )
+5.	PARAMETER GROUPS ---- ( TO CHANGE THE DATABASE PARAMETER AND SINCC RDS YOU CANT SO SSH AND CHANGE CONFIGURATION -  FOR THE DATABASE YOU WANT TO CREATE )
+ Create parameter group ---MYSQL8----Name:vprofileparagroup---create 
+6. Cate database---Standard create---MYSQL---Templete:Dev/Test---Availability:Single db instance----Setting –name:vprofilerdssql---username:Admin---Autogenerate password----burstable classes---show old select T2 micro or T3----storage:Gp2---20GB---Connectivity: Don’t connect to Ec2----No public access ----Security group: Backend we created---Additional cnfig: Initial database name = accounts----parameter group:ours---logs select all logs to cloudwatch----CREATE
+7. View credential detail : copy and save user name and password
 
-•	PARAMETER GROUPS ---- ( TO CHANGE THE DATABASE PARAMETER AND SINCC RDS YOU CANT SO SSH AND CHANGE CONFIGURATION -  FOR THE DATABASE YOU WANT TO CREATE )
+8. ELASTIC CHACHE 
+      •	Create Subnet group----Name:vprofilememchachedsg---all the zones are created by default---Create
+      •	Create parameter group --- Name:vprofilememchachedpg---Version:memchache 1.6 ---Create 
+      •	Dashboard ---Create memechache cluster ---Aws cloud---Name:vprofileelasticchsvc----parameter group: select we created ----Node type:cache t2 micro----nodes:1----select our SG -Create 
+      •	Copy the endpoint and save 
 
-•	Create parameter group ---MYSQL8----Name:vprofileparagroup---create 
-
-•	Create database---Standard create---MYSQL---Templete:Dev/Test---Availability:Single db instance----Setting –name:vprofilerdssql---username:Admin---Autogenerate password----burstable classes---show old select T2 micro or T3----storage:Gp2---20GB---Connectivity: Don’t connect to Ec2----No public access ----Security group: Backend we created---Additional cnfig: Initial database name = accounts----parameter group:ours---logs select all logs to cloudwatch----CREATE 
-
-•	View credential detail : copy and save user name and password
-
-4.	ELASTIC CHACHE 
-•	Create Subnet group----Name:vprofilememchachedsg---all the zones are created by default---Create
-•	Create parameter group --- Name:vprofilememchachedpg---Version:memchache 1.6 ---Create 
-•	Dashboard ---Create memechache cluster ---Aws cloud---Name:vprofileelasticchsvc----parameter group: select we created ----Node type:cache t2 micro----nodes:1----select our SG ----Create 
-•	Copy the endpoint and save 
-
-5.	MQ ( Fully managed message broker service )
-•	Create ---RabbitMQ---Single instance ----Name:vprofilermq---t3micro----Username:rabbit , Password:Blue7890bunny------Copy and save it -----Network and Security : Private----SG:Backend ----Create 
-6.	Go to github---SRC---MAIN---resources ---dbbackup.sql----
+9.	MQ ( Fully managed message broker service )
+      •	Create ---RabbitMQ---Single instance ----Name:vprofilermq---t3micro----Username:rabbit , Password:Blue7890bunny------Copy and save it -----Network and Security : Private----SG:Backend ----Create 
+10.	Go to github---SRC---MAIN---resources ---dbbackup.sql----
 
 
-Note : ( THE ONLY WAY TO ACCESS OUR INSTANCE, WHICH IS IN PRIVATE SUBNETS IS THROUGH THE SAME VPC----IN  OUR INSTANCE)-----SO WE ARE GOING TO LAUNCH INSTANCE IN THA SAME VPC ,so we can connect our instance and run this sql query
+Note : ( THE ONLY WAY TO ACCESS OUR INSTANCE, WHICH IS IN PRIVATE SUBNETS IS THROUGH THE SAME VPC----IN  OUR INSTANCE)-----SO WE ARE GOING TO LAUNCH INSTANCE IN THA SAME VPC ,so we can connect our instance and run this sql query)
 
-7.	EC2 ---MAKE SURE IN SAME REGION ---Name:MySQLClient----OS:UBUNTU----select the key pair----Network setting Edit ---Create SG –Name:mysqlclientsg (ssh ansd my ip)---create
-8.	WE HAVE TO ENABLE THE BACKEND SG TO ALLOW CONNECTION FROM THE INSTANCE SG TO SG
-9.	Go to MysqLclientsg----copy the GS ID ---go to Backend SGInbound rules :add (Custom TCP/3306/mysqlsg)
-10.	Copy the Public IP OF EC2----open git bash ----
+
+11.	EC2 ---MAKE SURE IN SAME REGION ---Name:MySQLClient----OS:UBUNTU----select the key pair----Network setting Edit ---Create SG –Name:mysqlclientsg (ssh ansd my ip)---create
+12.	WE HAVE TO ENABLE THE BACKEND SG TO ALLOW CONNECTION FROM THE INSTANCE SG TO SG
+13.	Go to MysqLclientsg----copy the GS ID ---go to Backend SGInbound rules :add (Custom TCP/3306/mysqlsg)
+14.	Copy the Public IP OF EC2----open git bash ----
 •	ssh  -I Downloads/ vprofilebeankey.pem ubuntu@Public Ip
 •	sudo apt update
 •	sudo apt install mysql-client –y
@@ -88,23 +85,15 @@ Now we can delete the instance because the RDS and instance ready to connect
 •	Elasticchache ---Configure endpoint copy ---remove the port number and //upto and paste
 
 
-NOW THE COMPLTE BACKEND IS READY -------------------------------------------------------------------------------
+# NOW THE COMPLTE BACKEND IS READY -------------------------------------------------------------------------------
 
-
-
-
-
-
-
-AWS Beanstalk 
+# AWS Beanstalk SetUp
 1.	It assumes some role ----but it has issues so we create the role 
 2.	IAM Roles-- Aws services-EC2policy permission:Elasticbeanstalkwebtier , Admin access elasticbean , elasticbean SNS , Elastic bean custom platform ec2 role--name: vprofilebeanrole --- CREATED - DELETE THE Elastic beanstalk service role 
-
-
 3.	BEANSTALK - CREATE- Webserver environment - Application name: vprofile-app - environ name:vprofile-app-prod-- Domain : vprofileapp12 - Platform: Tomcat , branch: 11 --- presets: Custom config - HERE WE  HAVE 2 ROLES (SERVICE ROLE AND EC2 ROLE )-- for ec2 select we created  service create it and new -- keypair:we created = default vpc- Activate the Public IP  Address and select all subnets - Tags: name,vproapp and project,vprofile--- Capacity : Load balanced ,ASG (Min:2 , Max:8 ) -- 
 Instance type : keep only t3 micro --Deployment policy: rolling and percentage:50-- LAUNCH IT MY BOY
-
 4.	While clicking the Domain in created one you can see your application you created
+
 Note: 
 1.	( SCALING TRIGGER : Network Out ---more user more network out)
 2.	Rolling updates and deployment policy --- 
